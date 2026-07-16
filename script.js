@@ -17,6 +17,23 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') setMenu(false);
 });
 
+// Keep every in-page navigation action inside the document—no page reloads.
+document.querySelectorAll('a[href^="#"]').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    const target = document.querySelector(link.getAttribute('href'));
+    if (!target) return;
+    event.preventDefault();
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// Correct deep-link positioning after fonts and responsive imagery settle.
+window.addEventListener('load', () => {
+  if (!window.location.hash) return;
+  const deepLinkTarget = document.querySelector(window.location.hash);
+  if (deepLinkTarget) setTimeout(() => deepLinkTarget.scrollIntoView({ block: 'start' }), 180);
+});
+
 const updateHeader = () => header.classList.toggle('scrolled', window.scrollY > 30);
 window.addEventListener('scroll', updateHeader, { passive: true });
 updateHeader();
@@ -53,6 +70,19 @@ if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && window.inn
     const y = Math.min(window.scrollY * 0.09, 70);
     heroMedia.style.translate = `0 ${y}px`;
   }, { passive: true });
+}
+
+// A restrained pointer response adds depth without turning the imagery into a modal.
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  document.querySelectorAll('.place-shot, .venue-tile, .closing-mosaic figure').forEach((card) => {
+    card.addEventListener('mousemove', (event) => {
+      const rect = card.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width - .5) * 5;
+      const y = ((event.clientY - rect.top) / rect.height - .5) * -5;
+      card.style.transform = `perspective(900px) rotateX(${y}deg) rotateY(${x}deg) translateY(-3px)`;
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+  });
 }
 
 document.getElementById('year').textContent = new Date().getFullYear();
